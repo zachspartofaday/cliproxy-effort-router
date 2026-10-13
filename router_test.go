@@ -174,8 +174,8 @@ func TestRouteCodexUsesConfigurationUpdates(t *testing.T) {
 	}
 }
 
-func TestNormalizeRoutesCodexOnlyForClaudeClients(t *testing.T) {
-	jev(t, map[string]string{"hi": "high"}, "")
+func TestNormalizeRoutesNativeAndClaudeClients(t *testing.T) {
+	jev(t, map[string]string{"hi": "high"}, "codex-baseline-effort: medium")
 	body := `{"reasoning":{"effort":"medium"},"input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"hi"}]}]}`
 	normalize := func(from string) string {
 		in, _ := json.Marshal(pluginapi.RequestTransformRequest{FromFormat: from, ToFormat: "codex", Model: "gpt-6-sol", Body: []byte(body)})
@@ -184,8 +184,8 @@ func TestNormalizeRoutesCodexOnlyForClaudeClients(t *testing.T) {
 		json.Unmarshal([]byte(gjson.GetBytes(raw, "result").Raw), &res)
 		return string(res.Body)
 	}
-	if normalize("openai-response") != body {
-		t.Fatal("native Responses clients (Codex CLI) must stay untouched")
+	if normalize("openai-response") == body {
+		t.Fatal("native Responses sampling must be routed")
 	}
 	if normalize("claude") == body {
 		t.Fatal("Claude Code traffic must be routed")

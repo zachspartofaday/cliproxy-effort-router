@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(//Users/zachskjaveland/Library/Application Support/effort-router-proof/private/**)",
+      "Edit(//Users/zachskjaveland/Library/Application Support/effort-router-proof/private/**)",
+      "Grep(//Users/zachskjaveland/Library/Application Support/effort-router-proof/private/**)"
+    ]
+  }
+}

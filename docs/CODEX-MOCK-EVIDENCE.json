@@ -1,0 +1,2073 @@
+[
+  {
+    "mock_only": true,
+    "shadow": null,
+    "case": "turn-1",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": null,
+    "case": "tool-loop",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": null,
+    "case": "turn-2",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": null,
+    "case": "standalone-compact",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": null,
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": null,
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": null,
+    "case": "stream-compact",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "compaction_trigger",
+          "role": null,
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "compaction_trigger",
+          "role": null,
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": null,
+    "case": "after-compact",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "compaction",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "compaction",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": null,
+    "case": "claude-regression",
+    "passed": true
+  },
+  {
+    "mock_only": true,
+    "shadow": true,
+    "case": "turn-1",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": true,
+    "case": "tool-loop",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": true,
+    "case": "turn-2",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": true,
+    "case": "standalone-compact",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": null,
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": null,
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": true,
+    "case": "stream-compact",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "compaction_trigger",
+          "role": null,
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "compaction_trigger",
+          "role": null,
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": true,
+    "case": "after-compact",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "compaction",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "compaction",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": true,
+    "case": "claude-regression",
+    "passed": true
+  },
+  {
+    "mock_only": true,
+    "kind": "normalizer-proof",
+    "sequence": 1,
+    "from": "openai-response",
+    "to": "codex",
+    "model_prefix": "gpt-6",
+    "shadow": true,
+    "scope": "df30d4c0dcb5d00ac53aaf8da4e04b70bfcf54d52e21f1b8a1277b6f8a687b8b",
+    "changed": false,
+    "new_window": true,
+    "request_top_fields_unchanged": true,
+    "before": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      }
+    ],
+    "after": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      }
+    ]
+  },
+  {
+    "mock_only": true,
+    "kind": "normalizer-proof",
+    "sequence": 2,
+    "from": "openai-response",
+    "to": "codex",
+    "model_prefix": "gpt-6",
+    "shadow": true,
+    "scope": "df30d4c0dcb5d00ac53aaf8da4e04b70bfcf54d52e21f1b8a1277b6f8a687b8b",
+    "changed": false,
+    "new_window": false,
+    "prefix_preserved": true,
+    "stable_top_fields_preserved": true,
+    "request_top_fields_unchanged": true,
+    "before": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call_output",
+        "payload": "[REDACTED]"
+      }
+    ],
+    "after": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call_output",
+        "payload": "[REDACTED]"
+      }
+    ]
+  },
+  {
+    "mock_only": true,
+    "kind": "normalizer-proof",
+    "sequence": 3,
+    "from": "openai-response",
+    "to": "codex",
+    "model_prefix": "gpt-6",
+    "shadow": true,
+    "scope": "df30d4c0dcb5d00ac53aaf8da4e04b70bfcf54d52e21f1b8a1277b6f8a687b8b",
+    "changed": false,
+    "new_window": false,
+    "prefix_preserved": true,
+    "stable_top_fields_preserved": true,
+    "request_top_fields_unchanged": true,
+    "before": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call_output",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "assistant",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      }
+    ],
+    "after": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call_output",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "assistant",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      }
+    ]
+  },
+  {
+    "mock_only": true,
+    "kind": "normalizer-proof",
+    "sequence": 4,
+    "from": "openai-response",
+    "to": "openai-response",
+    "model_prefix": "gpt-6",
+    "shadow": true,
+    "scope": "a819859c73a333a7aa3128b37467c0a3a7a28d5d941bddadc6c862287efa6616",
+    "changed": false,
+    "new_window": true,
+    "request_top_fields_unchanged": true,
+    "before": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call_output",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "assistant",
+        "payload": "[REDACTED]"
+      }
+    ],
+    "after": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call_output",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "assistant",
+        "payload": "[REDACTED]"
+      }
+    ]
+  },
+  {
+    "mock_only": true,
+    "kind": "normalizer-proof",
+    "sequence": 5,
+    "from": "openai-response",
+    "to": "codex",
+    "model_prefix": "gpt-6",
+    "shadow": true,
+    "scope": "df30d4c0dcb5d00ac53aaf8da4e04b70bfcf54d52e21f1b8a1277b6f8a687b8b",
+    "changed": false,
+    "new_window": false,
+    "prefix_preserved": false,
+    "stable_top_fields_preserved": true,
+    "request_top_fields_unchanged": true,
+    "before": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call_output",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "assistant",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "compaction_trigger",
+        "payload": "[REDACTED]"
+      }
+    ],
+    "after": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call_output",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "assistant",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "compaction_trigger",
+        "payload": "[REDACTED]"
+      }
+    ]
+  },
+  {
+    "mock_only": true,
+    "kind": "normalizer-proof",
+    "sequence": 6,
+    "from": "openai-response",
+    "to": "codex",
+    "model_prefix": "gpt-6",
+    "shadow": true,
+    "scope": "df30d4c0dcb5d00ac53aaf8da4e04b70bfcf54d52e21f1b8a1277b6f8a687b8b",
+    "changed": false,
+    "new_window": true,
+    "request_top_fields_unchanged": true,
+    "before": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "compaction",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      }
+    ],
+    "after": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "compaction",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      }
+    ]
+  },
+  {
+    "mock_only": true,
+    "kind": "normalizer-proof",
+    "sequence": 7,
+    "from": "claude",
+    "to": "claude",
+    "model_prefix": "claude-opus-5-5",
+    "shadow": true,
+    "scope": "c73cd8e0b1e3a82fe45e8a96e1ee5f0071a5bf2ceddc7d34f2f0e2eec96ff150",
+    "changed": false,
+    "new_window": true,
+    "request_top_fields_unchanged": true,
+    "before": [
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      }
+    ],
+    "after": [
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      }
+    ]
+  },
+  {
+    "mock_only": true,
+    "shadow": false,
+    "case": "turn-1",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "configuration_update",
+          "role": null,
+          "effort": "low"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": false,
+    "case": "tool-loop",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "configuration_update",
+          "role": null,
+          "effort": "low"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": false,
+    "case": "turn-2",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "configuration_update",
+          "role": null,
+          "effort": "low"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "configuration_update",
+          "role": null,
+          "effort": "xhigh"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": false,
+    "case": "standalone-compact",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": null,
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": null,
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": false,
+    "case": "stream-compact",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "compaction_trigger",
+          "role": null,
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "configuration_update",
+          "role": null,
+          "effort": "low"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "custom_tool_call_output",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "assistant",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "compaction_trigger",
+          "role": null,
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": false,
+    "case": "after-compact",
+    "http_status": 200,
+    "before": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "compaction",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    },
+    "after": {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "high",
+        "summary": "auto"
+      },
+      "input": [
+        {
+          "type": "message",
+          "role": "developer",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "compaction",
+          "role": null,
+          "payload": "[REDACTED]"
+        },
+        {
+          "type": "configuration_update",
+          "role": null,
+          "effort": "medium"
+        },
+        {
+          "type": "message",
+          "role": "user",
+          "payload": "[REDACTED]"
+        }
+      ]
+    }
+  },
+  {
+    "mock_only": true,
+    "shadow": false,
+    "case": "claude-regression",
+    "passed": true
+  },
+  {
+    "mock_only": true,
+    "kind": "normalizer-proof",
+    "sequence": 1,
+    "from": "openai-response",
+    "to": "codex",
+    "model_prefix": "gpt-6",
+    "shadow": false,
+    "scope": "b2c805bd83155eabf16c38b800de03e99a1e87767ad4622402fb55be117ec6a6",
+    "changed": true,
+    "new_window": true,
+    "request_top_fields_unchanged": true,
+    "before": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      }
+    ],
+    "after": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "configuration_update",
+        "effort": "low"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      }
+    ]
+  },
+  {
+    "mock_only": true,
+    "kind": "normalizer-proof",
+    "sequence": 2,
+    "from": "openai-response",
+    "to": "codex",
+    "model_prefix": "gpt-6",
+    "shadow": false,
+    "scope": "b2c805bd83155eabf16c38b800de03e99a1e87767ad4622402fb55be117ec6a6",
+    "changed": true,
+    "new_window": false,
+    "prefix_preserved": true,
+    "stable_top_fields_preserved": true,
+    "request_top_fields_unchanged": true,
+    "before": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call_output",
+        "payload": "[REDACTED]"
+      }
+    ],
+    "after": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "configuration_update",
+        "effort": "low"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call_output",
+        "payload": "[REDACTED]"
+      }
+    ]
+  },
+  {
+    "mock_only": true,
+    "kind": "normalizer-proof",
+    "sequence": 3,
+    "from": "openai-response",
+    "to": "codex",
+    "model_prefix": "gpt-6",
+    "shadow": false,
+    "scope": "b2c805bd83155eabf16c38b800de03e99a1e87767ad4622402fb55be117ec6a6",
+    "changed": true,
+    "new_window": false,
+    "prefix_preserved": true,
+    "stable_top_fields_preserved": true,
+    "request_top_fields_unchanged": true,
+    "before": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call_output",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "assistant",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      }
+    ],
+    "after": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "configuration_update",
+        "effort": "low"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call_output",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "assistant",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "configuration_update",
+        "effort": "xhigh"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      }
+    ]
+  },
+  {
+    "mock_only": true,
+    "kind": "normalizer-proof",
+    "sequence": 4,
+    "from": "openai-response",
+    "to": "openai-response",
+    "model_prefix": "gpt-6",
+    "shadow": false,
+    "scope": "410171a35725b15f84263c80acdcf20bc449ba1e6174dc33cf8306a4b82e4c13",
+    "changed": false,
+    "new_window": true,
+    "request_top_fields_unchanged": true,
+    "before": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call_output",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "assistant",
+        "payload": "[REDACTED]"
+      }
+    ],
+    "after": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call_output",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "assistant",
+        "payload": "[REDACTED]"
+      }
+    ]
+  },
+  {
+    "mock_only": true,
+    "kind": "normalizer-proof",
+    "sequence": 5,
+    "from": "openai-response",
+    "to": "codex",
+    "model_prefix": "gpt-6",
+    "shadow": false,
+    "scope": "b2c805bd83155eabf16c38b800de03e99a1e87767ad4622402fb55be117ec6a6",
+    "changed": true,
+    "new_window": false,
+    "prefix_preserved": false,
+    "stable_top_fields_preserved": true,
+    "request_top_fields_unchanged": true,
+    "before": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call_output",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "assistant",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "compaction_trigger",
+        "payload": "[REDACTED]"
+      }
+    ],
+    "after": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "configuration_update",
+        "effort": "low"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "custom_tool_call_output",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "assistant",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "compaction_trigger",
+        "payload": "[REDACTED]"
+      }
+    ]
+  },
+  {
+    "mock_only": true,
+    "kind": "normalizer-proof",
+    "sequence": 6,
+    "from": "openai-response",
+    "to": "codex",
+    "model_prefix": "gpt-6",
+    "shadow": false,
+    "scope": "b2c805bd83155eabf16c38b800de03e99a1e87767ad4622402fb55be117ec6a6",
+    "changed": true,
+    "new_window": true,
+    "request_top_fields_unchanged": true,
+    "before": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "compaction",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      }
+    ],
+    "after": [
+      {
+        "type": "message",
+        "role": "developer",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "compaction",
+        "payload": "[REDACTED]"
+      },
+      {
+        "type": "configuration_update",
+        "effort": "medium"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      }
+    ]
+  },
+  {
+    "mock_only": true,
+    "kind": "normalizer-proof",
+    "sequence": 7,
+    "from": "claude",
+    "to": "claude",
+    "model_prefix": "claude-opus-5-5",
+    "shadow": false,
+    "scope": "9bfc572d4c85f12a1664782323fef5eb3422bb019fd1b824837f7c25974c7cf0",
+    "changed": true,
+    "new_window": true,
+    "request_top_fields_unchanged": true,
+    "before": [
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      }
+    ],
+    "after": [
+      {
+        "type": "message",
+        "role": "system",
+        "effort": "high"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "payload": "[REDACTED]"
+      }
+    ]
+  }
+]

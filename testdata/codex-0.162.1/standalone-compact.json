@@ -1,0 +1,50 @@
+{
+  "model": "gpt-6.1-sol",
+  "input": [
+    {
+      "type": "message",
+      "role": "developer",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Synthetic stable coding instructions."
+        }
+      ]
+    },
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "first synthetic turn"
+        }
+      ]
+    },
+    {
+      "type": "custom_tool_call",
+      "call_id": "call_synthetic",
+      "name": "exec",
+      "namespace": "functions",
+      "input": "text(1 + 1)"
+    },
+    {
+      "type": "custom_tool_call_output",
+      "call_id": "call_synthetic",
+      "output": "2"
+    },
+    {
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "synthetic answer"
+        }
+      ],
+      "phase": "final"
+    }
+  ],
+  "instructions": "Synthetic compaction instructions.",
+  "prompt_cache_key": "synthetic-native-session"
+}

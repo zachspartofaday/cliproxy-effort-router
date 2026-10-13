@@ -38,14 +38,16 @@ import (
 )
 
 type config struct {
-	URL       string   `yaml:"jev-url"`
-	Model     string   `yaml:"jev-model"`
-	APIKey    string   `yaml:"jev-api-key"`
-	TimeoutMS int      `yaml:"timeout-ms"`
-	Models    []string `yaml:"models"`          // model-name prefixes to route
-	StateFile string   `yaml:"state-file"`      // append-only decision log
-	Shadow    bool     `yaml:"shadow"`          // classify and persist, never alter requests
-	Baseline  string   `yaml:"baseline-effort"` // client default; any other per-turn value is a manual /effort and wins
+	URL           string   `yaml:"jev-url"`
+	Model         string   `yaml:"jev-model"`
+	APIKey        string   `yaml:"jev-api-key"`
+	TimeoutMS     int      `yaml:"timeout-ms"`
+	Models        []string `yaml:"models"`                // model-name prefixes to route
+	StateFile     string   `yaml:"state-file"`            // append-only decision log
+	Shadow        bool     `yaml:"shadow"`                // classify and persist, never alter requests
+	CodexBaseline string   `yaml:"codex-baseline-effort"` // fixed native Codex request baseline
+	ProofFile     string   `yaml:"proof-file"`            // opt-in redacted normalizer evidence; empty by default
+	Baseline      string   `yaml:"baseline-effort"`       // client default; any other per-turn value is a manual /effort and wins
 }
 
 const noDecision = "-" // classifier failed or turn predates the router: never inject
@@ -72,6 +74,7 @@ func configure(raw []byte) error {
 		URL: "http://127.0.0.1:8765/v1/systemone", Model: "jev-latest",
 		TimeoutMS: 1500, Models: []string{"claude-fable-5-1", "claude-opus-5-5", "gpt-6"},
 		StateFile: filepath.Join(home, ".cli-proxy-api", "effort-router.jsonl"), Baseline: "medium",
+		CodexBaseline: "high",
 	}
 	if err := yaml.Unmarshal(raw, &c); err != nil {
 		return errors.New("invalid plugin configuration")
@@ -86,8 +89,14 @@ func configure(raw []byte) error {
 	if !filepath.IsAbs(c.StateFile) {
 		return errors.New("state-file must be absolute (no tilde expansion)")
 	}
+	if c.ProofFile != "" && (!filepath.IsAbs(c.ProofFile) || c.ProofFile == c.StateFile) {
+		return errors.New("proof-file must be a separate absolute path")
+	}
 	if _, ok := efforts[c.Baseline]; !ok && c.Baseline != "max" {
 		return errors.New("invalid baseline-effort")
+	}
+	if _, ok := efforts[c.CodexBaseline]; !ok {
+		return errors.New("invalid codex-baseline-effort")
 	}
 	for _, m := range c.Models {
 		if m == "" || len(m) > 128 || strings.HasPrefix("ocg/", m) || strings.HasPrefix(m, "ocg/") {

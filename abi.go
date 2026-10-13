@@ -129,12 +129,14 @@ func handleMethod(method string, request []byte) ([]byte, error) {
 			GitHubRepository: "https://github.com/zachspartofaday/cliproxy-effort-router",
 			ConfigFields: []pluginapi.ConfigField{
 				{Name: "shadow", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Classify and record decisions without changing any request bytes. Default false; enable for qualification."},
+				{Name: "proof-file", Type: pluginapi.ConfigFieldTypeString, Description: "Optional private JSONL of redacted normalizer shapes and keyed prefix comparisons. Empty disables it; never contains bodies or headers."},
 				{Name: "jev-url", Type: pluginapi.ConfigFieldTypeString, Description: "Jev-compatible classifier endpoint (POST /v1/systemone): SemIf, Laya or api.typesafe.ai."},
 				{Name: "jev-model", Type: pluginapi.ConfigFieldTypeString, Description: "Classifier model name, default jev-latest."},
 				{Name: "jev-api-key", Type: pluginapi.ConfigFieldTypeString, Description: "Bearer key for the classifier; empty for local servers."},
 				{Name: "timeout-ms", Type: pluginapi.ConfigFieldTypeInteger, Description: "Classifier timeout; on timeout the turn is left untouched. Default 1500."},
 				{Name: "models", Type: pluginapi.ConfigFieldTypeArray, Description: "Model-name prefixes to route. Supported: Claude with per-turn effort (claude-fable-5-1, claude-opus-5-5) and gpt-6."},
 				{Name: "baseline-effort", Type: pluginapi.ConfigFieldTypeEnum, EnumValues: []string{"low", "medium", "high", "xhigh", "max"}, Description: "Client default effort; any other request effort counts as a manual /effort and wins. Default medium (Claude Code)."},
+				{Name: "codex-baseline-effort", Type: pluginapi.ConfigFieldTypeEnum, EnumValues: []string{"low", "medium", "high", "xhigh"}, Description: "Fixed native Codex request-level effort. A different request setting wins. Default high; match the client's baseline."},
 				{Name: "state-file", Type: pluginapi.ConfigFieldTypeString, Description: "Append-only decision log; keeps past turns stable across restarts. Default ~/.cli-proxy-api/effort-router.jsonl."},
 			},
 		}}
@@ -150,12 +152,15 @@ func handleMethod(method string, request []byte) ([]byte, error) {
 		case "claude":
 			body = route(req.Model, body)
 		case "codex":
-			// Only Claude Code traffic: native Responses clients (Codex CLI) may call
-			// /responses/compact, which rejects histories with configuration_update.
 			if req.FromFormat == "claude" {
 				body = routeCodex(req.Model, body)
+			} else if req.FromFormat == "openai-response" {
+				body = routeNativeCodex(req.Model, body)
 			}
+			// CPA 8.0.26 standalone compact uses ToFormat=openai-response, not
+			// codex. Keep that body untouched; never add sampling updates there.
 		}
+		recordProof(req, body)
 		return okEnvelope(pluginapi.PayloadResponse{Body: body})
 	case pluginabi.MethodPluginQuiesce, pluginabi.MethodPluginShutdown:
 		return okEnvelope(struct{}{})
