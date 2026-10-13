@@ -8,7 +8,7 @@ A [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) request-normalizer
 | GPT-6 (`gpt-6*` via Codex, Claude-format clients only) | `{"type":"configuration_update","reasoning":{"effort":…}}` input item before the user turn | kept |
 | GPT-5.x | not routed: an effort change there rewrites the hidden system prefix | — |
 
-On this fork, `shadow: true` records choices without inserting anything. Start with [the security review](docs/REVIEW.md) and [the whiterock design/runbook](docs/WHITEROCK-DESIGN.md). The loopback Go adapter under `adapter/` implements the effort subset of Jev through CPA Responses and an `ocg/*` model.
+On this fork, `shadow: true` records choices without inserting anything. Start with [the security review](docs/REVIEW.md) and [the whiterock design/runbook](docs/WHITEROCK-DESIGN.md). The loopback Go adapter under `adapter/` uses actual Zen Jev by default; optional parallel DeepSeek comparison requires explicit plugin shadow mode and logs both picks/latencies without prompt text.
 
 Each turn is classified once, on its first request, and the decision is stored in an append-only JSONL file. Later requests replay the same inserts at the same positions, so history stays append-only.
 
@@ -61,4 +61,6 @@ go vet ./...
 scripts/build-linux-amd64.sh
 ```
 
-The adapter reads a private `cpa-key` systemd credential; it never loads existing CPA, Claude or Codex credential files. Initial whiterock configuration routes Claude only. Native Responses/compaction support remains deferred. See the runbook for ABI smoke tests, checksums, permissions, loopback namespace forwarding and rollback.
+The gateway reads a private `zen-key` systemd credential (plus `cpa-key` only for OCG comparison); it never loads existing CPA, Claude or Codex credential files. Initial whiterock configuration routes Claude only. Native Responses/compaction support remains deferred. See the runbook for ABI smoke tests, checksums, permissions, loopback namespace forwarding and rollback.
+
+The install gate is native Codex 0.162.1 / GPT-6.1-Sol code-mode proof off whiterock, including compaction, cache behavior and Claude regression. Offline tests alone do not authorize installation.

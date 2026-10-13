@@ -186,3 +186,34 @@ func TestTopLevelClaudeEffortOverrideWins(t *testing.T) {
 		t.Fatal("explicit top-level effort overridden")
 	}
 }
+
+func TestPluginMarksClassifierShadowStatus(t *testing.T) {
+	for _, shadow := range []bool{true, false} {
+		var marked bool
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var req struct {
+				State struct {
+					Shadow bool `json:"router_shadow"`
+				} `json:"state"`
+			}
+			if json.NewDecoder(r.Body).Decode(&req) != nil {
+				t.Error("invalid classification payload")
+			}
+			marked = req.State.Shadow
+			io.WriteString(w, `{"answers":{"effort":{"choice":"high"}}}`)
+		}))
+		value := "false"
+		if shadow {
+			value = "true"
+		}
+		if err := configure([]byte("jev-url: " + srv.URL + "\nstate-file: " + filepath.Join(t.TempDir(), "state") + "\nshadow: " + value)); err != nil {
+			t.Fatal(err)
+		}
+		body := []byte(`{"messages":[{"role":"user","content":"shadow marker test"}]}`)
+		out := route("claude-opus-5-5", body)
+		if marked != shadow || shadow && !bytes.Equal(out, body) {
+			t.Fatal("missing shadow provenance")
+		}
+		srv.Close()
+	}
+}

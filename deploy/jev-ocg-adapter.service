@@ -1,13 +1,13 @@
 [Unit]
-Description=Loopback Jev effort classifier through CPA
+Description=Loopback Jev classifier with optional OCG shadow comparison
 After=network.target
 
 [Service]
 Type=simple
 User=jev-ocg-adapter
 Group=jev-ocg-adapter
-LoadCredential=cpa-key:/etc/jev-ocg-adapter/cpa-key
-ExecStart=/usr/local/libexec/jev-ocg-adapter -listen 127.0.0.1:8765 -cpa-url http://127.0.0.1:9444 -model ocg/deepseek-v4.1-flash -timeout 1200ms
+LoadCredential=zen-key:/etc/jev-ocg-adapter/zen-key
+ExecStart=/usr/local/libexec/jev-ocg-adapter -listen 127.0.0.1:8765 -backend jev -jev-model jev-1.13-free -timeout 1200ms
 Restart=on-failure
 RestartSec=3
 UMask=0077
@@ -21,9 +21,6 @@ ProtectKernelModules=true
 ProtectControlGroups=true
 RestrictSUIDSGID=true
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
-IPAddressDeny=any
-IPAddressAllow=127.0.0.1/32
-IPAddressAllow=::1/128
 MemoryMax=256M
 TasksMax=64
 StandardOutput=journal

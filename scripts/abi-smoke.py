@@ -70,7 +70,7 @@ def main():
         key = pathlib.Path(directory, "fake-key")
         key.write_text("fake-smoke-only")
         key.chmod(0o600)
-        process = subprocess.Popen([str(pathlib.Path(sys.argv[2]).resolve()), "-listen", f"127.0.0.1:{port}", "-cpa-url", f"http://127.0.0.1:{mock.server_port}", "-credential-file", str(key)], stdout=subprocess.DEVNULL)
+        process = subprocess.Popen([str(pathlib.Path(sys.argv[2]).resolve()), "-backend", "ocg", "-listen", f"127.0.0.1:{port}", "-cpa-url", f"http://127.0.0.1:{mock.server_port}", "-credential-file", str(key)], stdout=subprocess.DEVNULL)
         try:
             for _ in range(100):
                 try:

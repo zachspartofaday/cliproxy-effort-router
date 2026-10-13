@@ -481,7 +481,7 @@ var efforts = map[string]string{
 func classify(c config, previous, message, turnID string) (string, error) {
 	reqBody, _ := json.Marshal(map[string]any{
 		"model": c.Model,
-		"state": map[string]string{"assistant_previous_reply_tail": previous, "user_message": message, "turn_id": turnID},
+		"state": map[string]any{"assistant_previous_reply_tail": previous, "user_message": message, "turn_id": turnID, "router_shadow": c.Shadow},
 		"questions": map[string]any{"effort": map[string]any{
 			"type":         "choice",
 			"instructions": "How much reasoning effort should a coding agent spend on this user message, given the assistant's previous reply?",
