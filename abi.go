@@ -35,10 +35,11 @@ import "C"
 
 import (
 	"encoding/json"
+	"fmt"
 	"unsafe"
 
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/pluginabi"
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/pluginapi"
+	"github.com/router-for-me/CLIProxyAPI/v8/sdk/pluginabi"
+	"github.com/router-for-me/CLIProxyAPI/v8/sdk/pluginapi"
 )
 
 // ponytail: ABI glue copied from dense-system; the logic lives in router.go.
@@ -57,8 +58,8 @@ var pluginVersion = "0.0.0-dev"
 func main() {}
 
 //export cliproxy_plugin_init
-func cliproxy_plugin_init(_ *C.cliproxy_host_api, plugin *C.cliproxy_plugin_api) C.int {
-	if plugin == nil {
+func cliproxy_plugin_init(host *C.cliproxy_host_api, plugin *C.cliproxy_plugin_api) C.int {
+	if host == nil || uint32(host.abi_version) != pluginabi.ABIVersion || plugin == nil {
 		return 1
 	}
 	plugin.abi_version = C.uint32_t(pluginabi.ABIVersion)
@@ -69,10 +70,20 @@ func cliproxy_plugin_init(_ *C.cliproxy_host_api, plugin *C.cliproxy_plugin_api)
 }
 
 //export cliproxyPluginCall
-func cliproxyPluginCall(method *C.char, request *C.uint8_t, requestLen C.size_t, response *C.cliproxy_buffer) C.int {
+func cliproxyPluginCall(method *C.char, request *C.uint8_t, requestLen C.size_t, response *C.cliproxy_buffer) (rc C.int) {
 	if response != nil {
 		response.ptr = nil
 		response.len = 0
+	}
+	defer func() {
+		if recover() != nil {
+			writeResponse(response, errorEnvelope("plugin_panic", "effort-router panic"))
+			rc = 1
+		}
+	}()
+	if requestLen > 64*1024*1024 || (request == nil && requestLen != 0) {
+		writeResponse(response, errorEnvelope("invalid_request", "invalid request buffer"))
+		return 1
 	}
 	if method == nil {
 		writeResponse(response, errorEnvelope("invalid_method", "method is required"))
@@ -105,14 +116,19 @@ func handleMethod(method string, request []byte) ([]byte, error) {
 		var lifecycle struct {
 			ConfigYAML []byte `json:"config_yaml"`
 		}
-		_ = json.Unmarshal(request, &lifecycle)
-		configure(lifecycle.ConfigYAML)
+		if err := json.Unmarshal(request, &lifecycle); err != nil {
+			return nil, fmt.Errorf("invalid lifecycle request")
+		}
+		if err := configure(lifecycle.ConfigYAML); err != nil {
+			return nil, err
+		}
 		reg := registration{SchemaVersion: pluginabi.SchemaVersion, Metadata: pluginapi.Metadata{
 			Name:             "effort-router",
 			Version:          pluginVersion,
 			Author:           "alex4o",
-			GitHubRepository: "https://github.com/alex4o/cliproxy-effort-router",
+			GitHubRepository: "https://github.com/zachspartofaday/cliproxy-effort-router",
 			ConfigFields: []pluginapi.ConfigField{
+				{Name: "shadow", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Classify and record decisions without changing any request bytes. Default false; enable for qualification."},
 				{Name: "jev-url", Type: pluginapi.ConfigFieldTypeString, Description: "Jev-compatible classifier endpoint (POST /v1/systemone): SemIf, Laya or api.typesafe.ai."},
 				{Name: "jev-model", Type: pluginapi.ConfigFieldTypeString, Description: "Classifier model name, default jev-latest."},
 				{Name: "jev-api-key", Type: pluginapi.ConfigFieldTypeString, Description: "Bearer key for the classifier; empty for local servers."},
@@ -127,7 +143,7 @@ func handleMethod(method string, request []byte) ([]byte, error) {
 	case pluginabi.MethodRequestNormalize:
 		var req pluginapi.RequestTransformRequest
 		if err := json.Unmarshal(request, &req); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("invalid normalize request")
 		}
 		body := req.Body
 		switch req.ToFormat {
@@ -141,8 +157,10 @@ func handleMethod(method string, request []byte) ([]byte, error) {
 			}
 		}
 		return okEnvelope(pluginapi.PayloadResponse{Body: body})
+	case pluginabi.MethodPluginQuiesce, pluginabi.MethodPluginShutdown:
+		return okEnvelope(struct{}{})
 	default:
-		return errorEnvelope("unknown_method", "unknown method: "+method), nil
+		return errorEnvelope("unknown_method", "unknown method"), nil
 	}
 }
 

@@ -1,0 +1,15 @@
+# Merge this subtree into CPA's existing config; do not replace other plugins.
+plugins:
+  enabled: true
+  dir: /opt/cliproxyapi/plugins
+  configs:
+    effort-router:
+      enabled: true
+      priority: 0
+      shadow: true
+      jev-url: http://127.0.0.1:8765/v1/systemone
+      jev-model: jev-latest
+      timeout-ms: 1500
+      models: [claude-fable-5-1, claude-opus-5-5]
+      baseline-effort: medium
+      state-file: /var/lib/cliproxyapi/effort-router/shadow.jsonl

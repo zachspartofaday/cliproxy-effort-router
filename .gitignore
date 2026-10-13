@@ -2,3 +2,5 @@
 *.so
 *.h
 .effort-router.tmp*
+dist/
+.DS_Store
