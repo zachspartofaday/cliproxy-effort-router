@@ -9,6 +9,7 @@ import http.server
 import json
 import os
 import pathlib
+import runpy
 import socket
 import subprocess
 import tempfile
@@ -20,6 +21,7 @@ import urllib.parse
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "testdata/codex-0.162.1"
+validate_proof = runpy.run_path(str(ROOT / "scripts/proof-export.py"))["normalizer"]
 records, classifier_calls = [], []
 claude_baseline = None
 
@@ -100,7 +102,7 @@ def run(cpa, library, adapter, shadow, evidence):
                 "codex": [{"name": "mock-codex", "base-url": f"http://127.0.0.1:{mock.server_port}", "models": [{"name": "gpt-6.1-sol", "alias": "gpt-6.1-sol", "support-configuration-update": True, "thinking": {"levels": ["low", "medium", "high", "xhigh"]}}], "keys": [{"api-key": "fake-upstream-proof", "disable-codex-cloaking": True}]}],
                 "claude": [{"name": "mock-claude", "base-url": f"http://127.0.0.1:{mock.server_port}", "models": [{"name": "claude-opus-5-5", "alias": "claude-opus-5-5"}], "keys": [{"api-key": "fake-claude-proof"}]}],
             },
-            "plugins": {"enabled": True, "dir": str(root / "plugins"), "configs": {"effort-router": {"enabled": shadow is not None, "shadow": bool(shadow), "jev-url": f"http://127.0.0.1:{adapter_port}/v1/systemone", "codex-baseline-effort": "high", "state-file": str(root / "state.jsonl"), "proof-file": str(root / "safe-proof.jsonl")}}},
+            "plugins": {"enabled": True, "dir": str(root / "plugins"), "configs": {"effort-router": {"enabled": shadow is not None, "shadow": bool(shadow), "models": ["gpt-6.1-sol", "claude-opus-5-5"], "jev-url": f"http://127.0.0.1:{adapter_port}/v1/systemone", "codex-baseline-effort": "high", "state-file": str(root / "state.jsonl"), "proof-file": str(root / "safe-proof.jsonl")}}},
         }
         path = root / "config.yaml";path.write_text(json.dumps(config));path.chmod(0o600)
         # An allowlisted child environment prevents accidental HOME_JWT/store/key
@@ -151,6 +153,8 @@ def run(cpa, library, adapter, shadow, evidence):
                     safe = (root / "safe-proof.jsonl").read_text()
                     assert "first synthetic turn" not in safe and "fake-zen-proof" not in safe
                     lines = [json.loads(line) for line in safe.splitlines()]
+                    for line in lines:
+                        validate_proof(line)
                     sampling = [line for line in lines if line["from"] == "openai-response" and line["to"] == "codex"]
                     assert len(sampling) == 5
                     assert sampling[1]["prefix_preserved"] is True and sampling[2]["prefix_preserved"] is True
