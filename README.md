@@ -10,6 +10,19 @@ A [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) request-normalizer
 
 On this fork, `shadow: true` records choices without inserting anything. Start with [the security review](docs/REVIEW.md). The loopback Go adapter under `adapter/` uses actual Zen Jev by default; optional parallel DeepSeek comparison requires explicit plugin shadow mode and logs both picks/latencies without prompt text.
 
+## How this fork differs from upstream
+
+This fork of [alex4o/cliproxy-effort-router](https://github.com/alex4o/cliproxy-effort-router) adds:
+
+- **Shadow mode** (`shadow`): classify and record every decision while returning byte-identical request bodies. Shadow and active decisions use separate key namespaces.
+- **Native Codex routing**: `openai-response` requests from Codex itself are routed too, against their own `codex-baseline-effort`; upstream routes Claude-format GPT-6 clients only.
+- **Classifier choice** (`jev-provider`): `custom` URL (the default), TypeSafe directly, or OpenCode Zen directly.
+- **Loopback Jev adapter** (`adapter/`): a small Go service that calls Jev through OpenCode Zen with a key from a systemd credential, so the key stays out of CPA's config; optionally compares DeepSeek picks in shadow mode.
+- **Security fixes** from [the review](docs/REVIEW.md): no prompt previews or raw classifier errors in logs; classifier calls outside locks with per-key deduplication and a concurrency cap; bounded responses and panic containment at the plugin boundary; no redirects or proxy environment; full-digest decision keys and private, symlink-safe state files; invalid config rejected instead of half-applied.
+- **Evidence tooling**: an opt-in redacted `proof-file`, ABI smoke tests, mock-upstream proof scripts and a Linux amd64 build script.
+
+Upstream's plugin store and Releases ship upstream's build, not this fork; build from source to run it.
+
 ## Status
 
 The reference deployment runs this build in production CPA in **active mode**, by the owner's choice, ahead of the native Codex proof gate below; it is live but not qualified. Shadow ran first (2026-10-17, about 240 classifications an hour, p95 under 500 ms). To roll back, set `shadow: true` in the plugin config: CPA hot-reloads it and request bodies pass through unchanged. Stopping the adapter only stops new classifications; turns already decided keep replaying their effort inserts, so histories stay stable, until shadow is on.
