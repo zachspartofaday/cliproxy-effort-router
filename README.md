@@ -86,6 +86,12 @@ effort-router:
   # state-file: /absolute/private/path/effort-router.jsonl
 ```
 
+## Management page
+
+The plugin adds **Effort routing** to the Management Center's plugin menu (CPA 8.0.26+, plugin schema 6). It shows the router's decisions from the state file: counts by model and effort, the share changed from baseline, an hourly mix, classifier latency and error categories, and the last 50 classified turns. Shadow decisions are listed separately.
+
+The page and its script are static and need no login, because CPA serves plugin resource routes without authentication. The data comes only from `GET /v0/management/effort-router/decisions?hours=1..168`, which requires the management key: enter it on the page, where it is kept for the browser tab only. Responses never include decision keys or prompt text; models, efforts and error categories are validated before they are returned.
+
 ## Caveats
 
 - Deleting the state file changes past turns once: a cache miss, and on Fable 5.1 the thinking blocks are invalidated.
