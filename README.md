@@ -12,7 +12,7 @@ On this fork, `shadow: true` records choices without inserting anything. Start w
 
 ## Status
 
-The reference deployment runs this build in production CPA in **active mode**, by the owner's choice, ahead of the native Codex proof gate below; it is live but not qualified. Shadow ran first (2026-10-17, about 240 classifications an hour, p95 under 500 ms). Rollback is either `shadow: true` in the plugin config, which CPA hot-reloads, or stopping the adapter, after which the plugin fails fast and passes requests through unchanged.
+The reference deployment runs this build in production CPA in **active mode**, by the owner's choice, ahead of the native Codex proof gate below; it is live but not qualified. Shadow ran first (2026-10-17, about 240 classifications an hour, p95 under 500 ms). To roll back, set `shadow: true` in the plugin config: CPA hot-reloads it and request bodies pass through unchanged. Stopping the adapter only stops new classifications; turns already decided keep replaying their effort inserts, so histories stay stable, until shadow is on.
 
 ## Codex support
 
