@@ -126,7 +126,7 @@ type summary struct {
 	Truncated     bool                      `json:"truncated"`               // the state tail starts after Since
 	CoverageFrom  string                    `json:"coverage_from,omitempty"` // earliest decision read, when truncated
 	ByModel       map[string]map[string]int `json:"by_model"`                // model -> effort -> count, live decisions only
-	Changed       map[string]int            `json:"changed,omitempty"`       // live decisions differing from the baseline
+	Changed       map[string]int            `json:"changed"`                 // live decisions differing from the baseline; null if unknown
 	ShadowByModel map[string]map[string]int `json:"shadow_by_model"`
 	Errors        map[string]int            `json:"errors"`
 	LatencyMs     map[string]int64          `json:"latency_ms"`
@@ -216,6 +216,7 @@ func summarize(c config, data []byte, truncated bool, now time.Time, hours int) 
 	if c.Baseline == c.CodexBaseline {
 		s.Changed = map[string]int{}
 		for m, counts := range s.ByModel {
+			s.Changed[m] = 0
 			for e, n := range counts {
 				if e != c.Baseline {
 					s.Changed[m] += n

@@ -170,8 +170,12 @@ func TestSummaryFlagsTruncationAndBaselineAmbiguity(t *testing.T) {
 	if s := summarize(c, data, true, now, 1); s.Truncated {
 		t.Fatal("a tail that reaches the window start is complete")
 	}
+	unchanged := []byte(`{"key":"k","effort":"high","at":"` + now.Add(-time.Hour).Format(time.RFC3339) + `","model":"gpt-6"}` + "\n")
+	if b, _ := json.Marshal(summarize(c, unchanged, false, now, 24)); !bytes.Contains(b, []byte(`"changed":{"gpt-6":0}`)) {
+		t.Fatalf("a model with no changes must report 0: %s", b)
+	}
 	c.Baseline = "medium"
-	if s := summarize(c, data, false, now, 24); s.Changed != nil || s.Truncated {
-		t.Fatalf("changed must be omitted when baselines differ: %+v", s)
+	if b, _ := json.Marshal(summarize(c, data, false, now, 24)); !bytes.Contains(b, []byte(`"changed":null`)) {
+		t.Fatalf("changed must be null when baselines differ: %s", b)
 	}
 }
