@@ -130,9 +130,10 @@ func handleMethod(method string, request []byte) ([]byte, error) {
 			ConfigFields: []pluginapi.ConfigField{
 				{Name: "shadow", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Classify and record decisions without changing any request bytes. Default false; enable for qualification."},
 				{Name: "proof-file", Type: pluginapi.ConfigFieldTypeString, Description: "Optional private JSONL of redacted normalizer shapes and keyed prefix comparisons. Empty disables it; never contains bodies or headers."},
-				{Name: "jev-url", Type: pluginapi.ConfigFieldTypeString, Description: "Jev-compatible classifier endpoint (POST /v1/systemone): SemIf, Laya or api.typesafe.ai."},
-				{Name: "jev-model", Type: pluginapi.ConfigFieldTypeString, Description: "Classifier model name, default jev-latest."},
-				{Name: "jev-api-key", Type: pluginapi.ConfigFieldTypeString, Description: "Bearer key for the classifier; empty for local servers."},
+				{Name: "jev-provider", Type: pluginapi.ConfigFieldTypeEnum, EnumValues: []string{"custom", "typesafe", "opencode"}, Description: "Classifier service. custom (default) uses jev-url, such as a local adapter; typesafe calls api.typesafe.ai and opencode calls OpenCode Zen directly, both with jev-api-key."},
+				{Name: "jev-url", Type: pluginapi.ConfigFieldTypeString, Description: "Jev-compatible classifier endpoint (POST /v1/systemone) for jev-provider custom: a local adapter, SemIf or Laya. Leave empty for typesafe or opencode."},
+				{Name: "jev-model", Type: pluginapi.ConfigFieldTypeString, Description: "Classifier model name, default jev-latest. With opencode, jev-latest means jev-1.13 (paid); jev-1.13-free is rate-limited."},
+				{Name: "jev-api-key", Type: pluginapi.ConfigFieldTypeString, Description: "Bearer key for the classifier: required for typesafe (TypeSafe console key) and opencode (OpenCode Console key); empty for local servers. Stored in CPA's config."},
 				{Name: "timeout-ms", Type: pluginapi.ConfigFieldTypeInteger, Description: "Classifier timeout; on timeout the turn is left untouched. Default 1500."},
 				{Name: "models", Type: pluginapi.ConfigFieldTypeArray, Description: "Model-name prefixes to route. Supported: Claude with per-turn effort (claude-fable-5-1, claude-opus-5-5) and gpt-6."},
 				{Name: "baseline-effort", Type: pluginapi.ConfigFieldTypeEnum, EnumValues: []string{"low", "medium", "high", "xhigh", "max"}, Description: "Client default effort; any other request effort counts as a manual /effort and wins. Default medium (Claude Code)."},

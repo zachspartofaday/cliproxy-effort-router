@@ -30,6 +30,16 @@ If you set `/effort` yourself to a non-baseline value, your setting wins. If the
 
 Any server that implements TypeSafe's Jev contract works: `POST /v1/systemone` with model `jev-latest` and a `choice` question, returning `answers.effort.choice`. SemIf, Laya and Jev all qualify.
 
+Pick the service with `jev-provider` (a dropdown in the Management Center):
+
+| `jev-provider` | Endpoint | Key |
+|---|---|---|
+| `custom` (default) | `jev-url`, such as the bundled loopback adapter, SemIf or Laya | `jev-api-key` if the server needs one |
+| `typesafe` | `https://api.typesafe.ai/v1/systemone` | TypeSafe console key |
+| `opencode` | `https://opencode.ai/inference/systemone/v1/systemone`; `jev-latest` is sent as `jev-1.13` | OpenCode Console key |
+
+With `typesafe` or `opencode` the key lives in CPA's config and the internal `turn_id`/`router_shadow` fields are not sent. The bundled adapter keeps the key out of CPA (a systemd credential) and adds an optional DeepSeek comparison, so the reference deployment uses `custom` pointed at it.
+
 The bundled adapter calls OpenCode Zen at `https://opencode.ai/inference/systemone/v1/systemone`; the legacy `/zen/v1` path throttles free Jev with HTTP 429. Free `jev-1.13-free` also rate-limits at production volume (100% 429 after about an hour of ~240 calls/h), so run paid `jev-1.13` (`-jev-model jev-1.13`): $0.042 per million input tokens, output free, about 750 input tokens per classification, roughly $0.10/day at that volume. Jev 1.14 is priced the same and adds nothing this router uses. With a non-root `User=`, the adapter accepts systemd's `LoadCredential` copy (root-owned, mode 0440 through an ACL that grants only the service user).
 
 ## Install
@@ -50,9 +60,10 @@ The reference deployment installed this ahead of the native Codex proof at its o
 ```yaml
 effort-router:
   enabled: true
-  jev-url: "http://127.0.0.1:8765/v1/systemone"
-  jev-model: "jev-latest"
-  # jev-api-key: ...
+  jev-provider: "custom"    # custom (jev-url) | typesafe | opencode
+  jev-url: "http://127.0.0.1:8765/v1/systemone"  # custom only
+  jev-model: "jev-latest"   # opencode maps jev-latest to jev-1.13
+  # jev-api-key: ...        # required for typesafe and opencode
   shadow: true              # classify/log only; returns identical request bytes
   timeout-ms: 1500
   models: ["claude-fable-5-1", "claude-opus-5-5", "gpt-6"]  # prefixes

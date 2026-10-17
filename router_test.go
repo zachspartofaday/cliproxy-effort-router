@@ -191,3 +191,80 @@ func TestNormalizeRoutesNativeAndClaudeClients(t *testing.T) {
 		t.Fatal("Claude Code traffic must be routed")
 	}
 }
+
+// providerJev serves every vendor preset from one local server and records each
+// request's model, state keys and Authorization header.
+func providerJev(t *testing.T) *[]map[string]any {
+	seen := new([]map[string]any)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req map[string]any
+		json.NewDecoder(r.Body).Decode(&req)
+		req["auth"] = r.Header.Get("Authorization")
+		*seen = append(*seen, req)
+		json.NewEncoder(w).Encode(map[string]any{"answers": map[string]any{"effort": map[string]any{"choice": "low"}}})
+	}))
+	t.Cleanup(srv.Close)
+	saved := providerURLs
+	providerURLs = map[string]string{"typesafe": srv.URL + "/ts", "opencode": srv.URL + "/oc"}
+	t.Cleanup(func() { providerURLs = saved })
+	return seen
+}
+
+func TestProviderPresetsCallVendorsWithoutLocalMetadata(t *testing.T) {
+	seen := providerJev(t)
+	for _, tc := range []struct{ provider, extra, model string }{
+		{"typesafe", "", "jev-latest"},
+		{"opencode", "", "jev-1.13"},
+		{"opencode", "jev-model: jev-1.13-free\n", "jev-1.13-free"},
+	} {
+		*seen = nil
+		cfgText := "jev-provider: " + tc.provider + "\njev-api-key: k\n" + tc.extra + "state-file: " + filepath.Join(t.TempDir(), "s.jsonl") + "\n"
+		if err := configure([]byte(cfgText)); err != nil {
+			t.Fatalf("%s: %v", tc.provider, err)
+		}
+		route("claude-fable-5-1", []byte(`{"messages":[{"role":"user","content":"hi"}]}`))
+		if len(*seen) != 1 {
+			t.Fatalf("%s: %d classifier calls", tc.provider, len(*seen))
+		}
+		req := (*seen)[0]
+		state, _ := req["state"].(map[string]any)
+		if req["model"] != tc.model || req["auth"] != "Bearer k" || len(state) != 2 || state["user_message"] != "hi" {
+			t.Fatalf("%s: model %v auth %v state keys %v", tc.provider, req["model"], req["auth"], state)
+		}
+	}
+}
+
+func TestProviderCustomKeepsAdapterMetadata(t *testing.T) {
+	jev(t, map[string]string{"hi": "low"}, "jev-provider: custom\n")
+	if cfg.URL == providerURLs["typesafe"] || cfg.Provider != "custom" {
+		t.Fatalf("custom must keep jev-url: %+v", cfg)
+	}
+	seen := providerJev(t)
+	*seen = nil
+	srvURL := providerURLs["typesafe"]
+	if err := configure([]byte("jev-url: " + srvURL + "\nstate-file: " + filepath.Join(t.TempDir(), "s.jsonl") + "\n")); err != nil {
+		t.Fatal(err)
+	}
+	route("claude-fable-5-1", []byte(`{"messages":[{"role":"user","content":"hi"}]}`))
+	state, _ := (*seen)[0]["state"].(map[string]any)
+	if _, ok := state["turn_id"]; !ok {
+		t.Fatalf("custom (default) provider must keep turn_id for local adapters: %v", state)
+	}
+}
+
+func TestProviderConfigErrors(t *testing.T) {
+	sf := "state-file: " + filepath.Join(t.TempDir(), "s.jsonl") + "\n"
+	for name, text := range map[string]string{
+		"unknown provider": "jev-provider: semif\n",
+		"typesafe no key":  "jev-provider: typesafe\n",
+		"opencode no key":  "jev-provider: opencode\n",
+		"conflicting url":  "jev-provider: opencode\njev-api-key: k\njev-url: http://127.0.0.1:8765/v1/systemone\n",
+	} {
+		if configure([]byte(text+sf)) == nil {
+			t.Errorf("%s: want error", name)
+		}
+	}
+	if err := configure([]byte("jev-provider: typesafe\njev-api-key: k\njev-url: " + providerURLs["typesafe"] + "\n" + sf)); err != nil {
+		t.Errorf("matching jev-url must be accepted: %v", err)
+	}
+}
