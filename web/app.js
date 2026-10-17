@@ -39,15 +39,19 @@ function render(d) {
     el("span", "Classifier: " + (d.provider || "custom"), "badge"),
     el("span", "Claude baseline: " + d.baseline_effort, "badge"),
     el("span", "Codex baseline: " + d.codex_baseline_effort, "badge"),
-    el("span", d.decisions + " turns since " + d.since, "muted"));
+    el("span", d.decisions + " turns since " + (d.truncated && d.coverage_from ? d.coverage_from : d.since), "muted"));
+  if (d.truncated) {
+    status.append(el("span", "Only the newest 4 MiB of the state file was read; it starts after the selected window" +
+      (d.coverage_from ? ", at " + d.coverage_from : "") + ". Counts cover that shorter period.", "badge"));
+  }
 
   const models = $("models");
   models.replaceChildren(row([["Model"], ...EFFORTS.map((e) => [e, "num"]), ["Changed", "num"], ["Mix"]], true));
-  const base = (m) => m.startsWith("gpt-6") ? d.codex_baseline_effort : d.baseline_effort;
+  // The server reports "changed" only when both baselines agree; otherwise it is unknown here.
   for (const [m, counts] of Object.entries(d.by_model)) {
     const total = EFFORTS.reduce((n, e) => n + (counts[e] || 0), 0);
-    const changed = total - (counts[base(m)] || 0);
-    const tr = row([[m], ...EFFORTS.map((e) => [counts[e] || 0, "num"]), [total ? Math.round(100 * changed / total) + "%" : "-", "num"]]);
+    const changed = d.changed ? d.changed[m] || 0 : null;
+    const tr = row([[m], ...EFFORTS.map((e) => [counts[e] || 0, "num"]), [total && changed !== null ? Math.round(100 * changed / total) + "%" : "-", "num"]]);
     const td = el("td"); td.append(bar(counts)); tr.append(td);
     models.append(tr);
   }

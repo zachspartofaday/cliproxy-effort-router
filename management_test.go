@@ -154,7 +154,24 @@ func TestReadStateTailDropsPartialFirstLine(t *testing.T) {
 	if err := os.WriteFile(path, data, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if got := readStateTail(path); string(got) != last+"\n" {
-		t.Fatalf("tail: %d bytes", len(got))
+	if got, truncated := readStateTail(path); string(got) != last+"\n" || !truncated {
+		t.Fatalf("tail: %d bytes, truncated %v", len(got), truncated)
+	}
+}
+
+func TestSummaryFlagsTruncationAndBaselineAmbiguity(t *testing.T) {
+	now := time.Now().UTC()
+	data := []byte(`{"key":"k","effort":"low","at":"` + now.Add(-time.Hour).Format(time.RFC3339) + `","model":"gpt-6"}` + "\n")
+	c := config{Baseline: "high", CodexBaseline: "high", Models: []string{"gpt-6"}}
+	s := summarize(c, data, true, now, 24)
+	if !s.Truncated || s.CoverageFrom != now.Add(-time.Hour).Format(time.RFC3339) || s.Changed["gpt-6"] != 1 {
+		t.Fatalf("truncated window: %+v", s)
+	}
+	if s := summarize(c, data, true, now, 1); s.Truncated {
+		t.Fatal("a tail that reaches the window start is complete")
+	}
+	c.Baseline = "medium"
+	if s := summarize(c, data, false, now, 24); s.Changed != nil || s.Truncated {
+		t.Fatalf("changed must be omitted when baselines differ: %+v", s)
 	}
 }

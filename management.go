@@ -60,7 +60,8 @@ func handleManagement(req pluginapi.ManagementRequest) pluginapi.ManagementRespo
 		if err != nil || hours < 1 || hours > 168 {
 			hours = 24
 		}
-		body, _ := json.Marshal(summarize(c, readStateTail(c.StateFile), time.Now().UTC(), hours))
+		data, truncated := readStateTail(c.StateFile)
+		body, _ := json.Marshal(summarize(c, data, truncated, time.Now().UTC(), hours))
 		return pluginapi.ManagementResponse{Headers: http.Header{"Content-Type": {"application/json"}, "Cache-Control": {"no-store"}}, Body: body}
 	case strings.HasPrefix(req.Path, "/v0/resource/") && strings.HasSuffix(req.Path, "/page"):
 		return static("text/html; charset=utf-8", pageHTML)
@@ -70,16 +71,17 @@ func handleManagement(req pluginapi.ManagementRequest) pluginapi.ManagementRespo
 	return pluginapi.ManagementResponse{StatusCode: http.StatusNotFound, Headers: http.Header{"Content-Type": {"text/plain"}}, Body: []byte("not found")}
 }
 
-// readStateTail returns whole lines from the end of the state file, or nil.
-func readStateTail(path string) []byte {
+// readStateTail returns whole lines from the end of the state file, and whether
+// older lines were left out.
+func readStateTail(path string) ([]byte, bool) {
 	f, err := openStateFile(path, false)
 	if err != nil {
-		return nil
+		return nil, false
 	}
 	defer f.Close()
 	info, err := f.Stat()
 	if err != nil || !info.Mode().IsRegular() {
-		return nil
+		return nil, false
 	}
 	start := info.Size() - stateTailBytes
 	if start < 0 {
@@ -87,14 +89,14 @@ func readStateTail(path string) []byte {
 	}
 	data, err := io.ReadAll(io.NewSectionReader(f, start, info.Size()-start))
 	if err != nil {
-		return nil
+		return nil, false
 	}
 	if start > 0 {
 		if i := bytes.IndexByte(data, '\n'); i >= 0 {
 			data = data[i+1:]
 		}
 	}
-	return data
+	return data, start > 0
 }
 
 type decisionRow struct {
@@ -121,7 +123,10 @@ type summary struct {
 	Since         string                    `json:"since"`
 	Hours         int                       `json:"hours"`
 	Decisions     int                       `json:"decisions"`
-	ByModel       map[string]map[string]int `json:"by_model"` // model -> effort -> count, live decisions only
+	Truncated     bool                      `json:"truncated"`               // the state tail starts after Since
+	CoverageFrom  string                    `json:"coverage_from,omitempty"` // earliest decision read, when truncated
+	ByModel       map[string]map[string]int `json:"by_model"`                // model -> effort -> count, live decisions only
+	Changed       map[string]int            `json:"changed,omitempty"`       // live decisions differing from the baseline
 	ShadowByModel map[string]map[string]int `json:"shadow_by_model"`
 	Errors        map[string]int            `json:"errors"`
 	LatencyMs     map[string]int64          `json:"latency_ms"`
@@ -131,7 +136,7 @@ type summary struct {
 
 // summarize aggregates classified turns since now-hours. Every value is validated
 // before it is returned; the state file never holds prompts, and keys are dropped.
-func summarize(c config, data []byte, now time.Time, hours int) summary {
+func summarize(c config, data []byte, truncated bool, now time.Time, hours int) summary {
 	mode := "active"
 	if c.Shadow {
 		mode = "shadow"
@@ -144,12 +149,16 @@ func summarize(c config, data []byte, now time.Time, hours int) summary {
 	hourly := map[string]*hourRow{}
 	var ms []int64
 	var rows []decisionRow
+	var earliest time.Time
 	for _, line := range bytes.Split(data, []byte{'\n'}) {
 		var l logLine
 		if json.Unmarshal(line, &l) != nil || l.At == "" {
 			continue // pre-router and replay markers carry no time and no decision
 		}
 		at, err := time.Parse(time.RFC3339, l.At)
+		if err == nil && (earliest.IsZero() || at.Before(earliest)) {
+			earliest = at
+		}
 		if err != nil || at.Before(since) || at.After(now.Add(time.Minute)) {
 			continue
 		}
@@ -195,6 +204,25 @@ func summarize(c config, data []byte, now time.Time, hours int) summary {
 		}
 	}
 	s.Decisions = len(rows)
+	if truncated && (earliest.IsZero() || earliest.After(since)) {
+		s.Truncated = true
+		if !earliest.IsZero() {
+			s.CoverageFrom = earliest.UTC().Format(time.RFC3339)
+		}
+	}
+	// Native Codex compares against codex-baseline-effort and Claude-format requests
+	// against baseline-effort; the state file does not record which path decided, so
+	// "changed" is only well defined when both baselines agree.
+	if c.Baseline == c.CodexBaseline {
+		s.Changed = map[string]int{}
+		for m, counts := range s.ByModel {
+			for e, n := range counts {
+				if e != c.Baseline {
+					s.Changed[m] += n
+				}
+			}
+		}
+	}
 	for _, h := range hourly {
 		s.Hourly = append(s.Hourly, *h)
 	}
