@@ -2,3 +2,6 @@
 *.so
 *.h
 .effort-router.tmp*
+dist/
+.DS_Store
+__pycache__/

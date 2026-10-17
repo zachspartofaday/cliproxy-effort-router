@@ -1,0 +1,64 @@
+{
+  "model": "gpt-6.1-sol",
+  "stream": true,
+  "input": [
+    {
+      "type": "message",
+      "role": "developer",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Synthetic stable coding instructions."
+        }
+      ]
+    },
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "first synthetic turn"
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "namespace",
+      "name": "functions",
+      "description": "Synthetic code-mode tools",
+      "tools": [
+        {
+          "type": "custom",
+          "name": "exec",
+          "description": "Execute synthetic JavaScript",
+          "format": {
+            "type": "grammar",
+            "syntax": "lark",
+            "definition": "start: /[\\s\\S]+/"
+          }
+        }
+      ]
+    }
+  ],
+  "tool_choice": "auto",
+  "parallel_tool_calls": true,
+  "reasoning": {
+    "effort": "high",
+    "summary": "auto"
+  },
+  "store": false,
+  "include": [
+    "reasoning.encrypted_content"
+  ],
+  "prompt_cache_key": "synthetic-native-session",
+  "text": {
+    "verbosity": "medium"
+  },
+  "client_metadata": {
+    "session_id": "synthetic-native-session",
+    "thread_id": "synthetic-native-thread",
+    "turn_id": "synthetic-turn-1"
+  }
+}

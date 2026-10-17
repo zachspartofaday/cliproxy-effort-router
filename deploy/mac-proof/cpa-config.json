@@ -1,0 +1,31 @@
+{
+  "config-version": 8,
+  "server": {"host": "127.0.0.1", "port": 8318},
+  "oauth": {"auth-dir": "REPLACE_WITH_PRIVATE_PREFIX/cpa-auth"},
+  "access": {"api-keys": []},
+  "management": {"allow-remote": false, "disable-control-panel": true},
+  "debug": false,
+  "request-log": false,
+  "logging-to-file": true,
+  "logs-max-total-size-mb": 100,
+  "request-retry": 0,
+  "disable-image-generation": true,
+  "plugins": {
+    "enabled": true,
+    "dir": "REPLACE_WITH_PRIVATE_PREFIX/plugins",
+    "configs": {
+      "effort-router": {
+        "enabled": true,
+        "shadow": true,
+        "jev-url": "http://127.0.0.1:8766/v1/systemone",
+        "jev-model": "jev-latest",
+        "timeout-ms": 1500,
+        "models": ["gpt-6.1-sol", "claude-opus-5-5"],
+        "baseline-effort": "medium",
+        "codex-baseline-effort": "high",
+        "state-file": "REPLACE_WITH_PRIVATE_PREFIX/shadow.jsonl",
+        "proof-file": "REPLACE_WITH_PRIVATE_PREFIX/normalizer-proof.jsonl"
+      }
+    }
+  }
+}

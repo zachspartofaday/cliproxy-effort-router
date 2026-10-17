@@ -1,0 +1,16 @@
+model = "gpt-6.1-sol"
+model_provider = "proof-cpa"
+model_reasoning_effort = "high"
+
+[features]
+code_mode = true
+multi_agent = false
+
+[model_providers.proof-cpa]
+name = "Local CPA proof"
+base_url = "http://127.0.0.1:8319/v1"
+wire_api = "responses"
+requires_openai_auth = false
+supports_websockets = false
+request_max_retries = 0
+stream_max_retries = 0

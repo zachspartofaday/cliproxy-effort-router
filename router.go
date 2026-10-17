@@ -14,6 +14,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -23,6 +24,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -36,99 +38,164 @@ import (
 )
 
 type config struct {
-	URL       string   `yaml:"jev-url"`
-	Model     string   `yaml:"jev-model"`
-	APIKey    string   `yaml:"jev-api-key"`
-	TimeoutMS int      `yaml:"timeout-ms"`
-	Models    []string `yaml:"models"`          // model-name prefixes to route
-	StateFile string   `yaml:"state-file"`      // append-only decision log
-	Baseline  string   `yaml:"baseline-effort"` // client default; any other per-turn value is a manual /effort and wins
+	URL           string   `yaml:"jev-url"`
+	Model         string   `yaml:"jev-model"`
+	APIKey        string   `yaml:"jev-api-key"`
+	TimeoutMS     int      `yaml:"timeout-ms"`
+	Models        []string `yaml:"models"`                // model-name prefixes to route
+	StateFile     string   `yaml:"state-file"`            // append-only decision log
+	Shadow        bool     `yaml:"shadow"`                // classify and persist, never alter requests
+	CodexBaseline string   `yaml:"codex-baseline-effort"` // fixed native Codex request baseline
+	ProofFile     string   `yaml:"proof-file"`            // opt-in redacted normalizer evidence; empty by default
+	Baseline      string   `yaml:"baseline-effort"`       // client default; any other per-turn value is a manual /effort and wins
 }
 
 const noDecision = "-" // classifier failed or turn predates the router: never inject
 
-// ponytail: one global lock, held across the classifier call so concurrent
-// requests of one turn cannot decide twice; routed requests are serialized
-// for up to timeout-ms. Per-key locks if that latency matters.
-var (
+// Configuration swaps are atomic; each state owns its decision and write locks.
+// Network calls never hold either lock, including recursive CPA classifier traffic.
+type routerState struct {
 	mu        sync.Mutex
-	cfg       config
-	decisions = map[string]string{}
-	loaded    string
-	warned    bool // state-file errors are logged once
+	decisions map[string]string
+	pending   map[string]chan struct{}
+	warned    bool
+}
+
+var (
+	cfgMu           sync.RWMutex
+	cfg             config
+	state           *routerState
+	classifierSlots = make(chan struct{}, 8)
 )
 
-func configure(raw []byte) {
+func configure(raw []byte) error {
 	home, _ := os.UserHomeDir()
 	c := config{
-		URL:       "http://127.0.0.1:8765/v1/systemone",
-		Model:     "jev-latest",
-		TimeoutMS: 1500,
-		Models:    []string{"claude-fable-5-1", "claude-opus-5-5", "gpt-6"},
-		StateFile: filepath.Join(home, ".cli-proxy-api", "effort-router.jsonl"),
-		Baseline:  "medium",
+		URL: "http://127.0.0.1:8765/v1/systemone", Model: "jev-latest",
+		TimeoutMS: 1500, Models: []string{"claude-fable-5-1", "claude-opus-5-5", "gpt-6"},
+		StateFile: filepath.Join(home, ".cli-proxy-api", "effort-router.jsonl"), Baseline: "medium",
+		CodexBaseline: "high",
 	}
-	_ = yaml.Unmarshal(raw, &c)
-	mu.Lock()
-	defer mu.Unlock()
+	if err := yaml.Unmarshal(raw, &c); err != nil {
+		return errors.New("invalid plugin configuration")
+	}
+	u, err := url.Parse(c.URL)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+		return errors.New("invalid classifier URL")
+	}
+	if c.TimeoutMS < 1 || c.TimeoutMS > 30000 {
+		return errors.New("timeout-ms must be 1..30000")
+	}
+	if !filepath.IsAbs(c.StateFile) {
+		return errors.New("state-file must be absolute (no tilde expansion)")
+	}
+	if c.ProofFile != "" && (!filepath.IsAbs(c.ProofFile) || c.ProofFile == c.StateFile) {
+		return errors.New("proof-file must be a separate absolute path")
+	}
+	if _, ok := efforts[c.Baseline]; !ok && c.Baseline != "max" {
+		return errors.New("invalid baseline-effort")
+	}
+	if _, ok := efforts[c.CodexBaseline]; !ok {
+		return errors.New("invalid codex-baseline-effort")
+	}
+	for _, m := range c.Models {
+		if m == "" || len(m) > 128 || strings.HasPrefix("ocg/", m) || strings.HasPrefix(m, "ocg/") {
+			return errors.New("models must exclude ocg/ classifier traffic and empty prefixes")
+		}
+	}
+	cfgMu.Lock()
+	defer cfgMu.Unlock()
+	if state == nil || cfg.StateFile != c.StateFile {
+		state = &routerState{decisions: map[string]string{}, pending: map[string]chan struct{}{}}
+		state.load(c.StateFile)
+	}
 	cfg = c
-	if loaded != c.StateFile {
-		loadDecisions(c.StateFile)
-		loaded = c.StateFile
-	}
+	return nil
+}
+
+func snapshot() (config, *routerState) {
+	cfgMu.RLock()
+	defer cfgMu.RUnlock()
+	return cfg, state
 }
 
 type logLine struct {
-	Key     string `json:"key"`
-	Effort  string `json:"effort"`
-	At      string `json:"at,omitempty"`
-	Model   string `json:"model,omitempty"`
-	Ms      int64  `json:"ms,omitempty"`
-	Preview string `json:"preview,omitempty"`
-	Err     string `json:"err,omitempty"`
+	Key    string `json:"key"`
+	Effort string `json:"effort"`
+	At     string `json:"at,omitempty"`
+	Model  string `json:"model,omitempty"`
+	Ms     int64  `json:"ms,omitempty"`
+	Shadow bool   `json:"shadow,omitempty"`
+	Err    string `json:"err,omitempty"`
 }
 
-func warnState(err error) {
-	if err != nil && !warned {
-		warned = true
-		log.Printf("effort-router: state file %s: %v (past turns may change after a restart)", cfg.StateFile, err)
+func (s *routerState) warn(err error) {
+	if err != nil && !s.warned {
+		s.warned = true
+		log.Print("effort-router: state unavailable; new decisions will not be applied")
 	}
 }
 
-func loadDecisions(path string) {
-	decisions = map[string]string{}
-	f, err := os.Open(path)
+// Caller holds s.mu (or owns a new state not yet published).
+func (s *routerState) load(path string) {
+	s.decisions = map[string]string{}
+	f, err := openStateFile(path, false)
 	if errors.Is(err, fs.ErrNotExist) {
 		return
 	}
 	if err != nil {
-		warnState(err)
+		s.warn(err)
 		return
 	}
 	defer f.Close()
+	info, err := f.Stat()
+	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm()&0o077 != 0 {
+		s.warn(errors.New("unsafe state file"))
+		return
+	}
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
 		var l logLine
-		if json.Unmarshal(sc.Bytes(), &l) == nil && l.Key != "" {
-			decisions[l.Key] = l.Effort
+		if json.Unmarshal(sc.Bytes(), &l) == nil && len(l.Key) == 64 {
+			if _, ok := efforts[l.Effort]; ok || l.Effort == noDecision {
+				k := l.Key
+				if l.Shadow {
+					k = "shadow:" + k
+				}
+				s.decisions[k] = l.Effort
+			}
 		}
 	}
-	warnState(sc.Err())
+	s.warn(sc.Err())
 }
 
-func record(l logLine) {
-	decisions[l.Key] = l.Effort
-	f, err := os.OpenFile(cfg.StateFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
-	if err != nil {
-		warnState(err)
-		return
+// Persist before publishing. No prompt, response body, URL or secret is recorded.
+func (s *routerState) record(c config, l logLine, cacheKey string) {
+	f, err := openStateFile(c.StateFile, true)
+	if err == nil {
+		var info fs.FileInfo
+		info, err = f.Stat()
+		if err == nil && (!info.Mode().IsRegular() || info.Mode().Perm()&0o077 != 0) {
+			err = errors.New("unsafe state file permissions")
+		}
+		if err == nil {
+			b, _ := json.Marshal(l)
+			_, err = f.Write(append(append([]byte{'\n'}, b...), '\n'))
+			if err == nil {
+				err = f.Sync()
+			}
+		}
+		closeErr := f.Close()
+		if err == nil {
+			err = closeErr
+		}
 	}
-	defer f.Close()
-	b, _ := json.Marshal(l)
-	// Leading newline: a line torn by a crash ends here instead of swallowing
-	// this record; the blank line it may leave is skipped on load.
-	_, err = f.Write(append([]byte{'\n'}, b...))
-	warnState(err)
+	s.warn(err)
+	if err != nil {
+		s.decisions[cacheKey] = noDecision
+	} else {
+		s.decisions[cacheKey] = l.Effort
+	}
 }
 
 // userText returns the typed text of a user message, or ok=false for tool
@@ -190,17 +257,34 @@ func head(s string, n int) string {
 
 func key(text string) string {
 	sum := sha256.Sum256([]byte(text))
-	return hex.EncodeToString(sum[:12])
+	return hex.EncodeToString(sum[:])
 }
 
-func routed(model string) bool {
-	return slices.ContainsFunc(cfg.Models, func(prefix string) bool { return strings.HasPrefix(model, prefix) })
+// Chain typed user turns so key computation stays linear in history size.
+func historyKey(previous, text string) string {
+	material, _ := json.Marshal([]string{previous, text})
+	return key(string(material))
+}
+
+func modelPrefix(c config, model string) string {
+	for _, prefix := range c.Models {
+		if strings.HasPrefix(model, prefix) {
+			return prefix
+		}
+	}
+	return ""
+}
+
+func routed(c config, model string) bool {
+	return slices.ContainsFunc(c.Models, func(prefix string) bool { return strings.HasPrefix(model, prefix) })
 }
 
 func route(model string, body []byte) []byte {
-	mu.Lock()
-	defer mu.Unlock()
-	if !routed(model) {
+	c, s := snapshot()
+	if s == nil || !routed(c, model) || !gjson.ValidBytes(body) {
+		return body
+	}
+	if e := gjson.GetBytes(body, "output_config.effort"); e.Exists() && e.String() != c.Baseline {
 		return body
 	}
 	msgs := gjson.GetBytes(body, "messages").Array()
@@ -211,7 +295,8 @@ func route(model string, body []byte) []byte {
 		}
 	}
 	inserts := map[int]string{} // message index -> directive placed before it
-	var last gjson.Result       // latest assistant message so far
+	history := ""
+	var last gjson.Result // latest assistant message so far
 	for i, msg := range msgs {
 		if msg.Get("role").String() == "assistant" {
 			last = msg
@@ -219,6 +304,10 @@ func route(model string, body []byte) []byte {
 		text, ok := userText(msg)
 		if !ok {
 			continue
+		}
+		history = historyKey(history, text)
+		if i > 0 && isEffortDirective(msgs[i-1]) && msgs[i-1].Get("content").IsArray() && len(msgs[i-1].Get("content").Array()) == 0 {
+			continue // Already carries an effort-only directive from a prior pass.
 		}
 		// Claude Code 2.1.280 attaches the turn's effort to the system message(s)
 		// right after the user message. A non-baseline value is the user's /effort.
@@ -228,16 +317,16 @@ func route(model string, body []byte) []byte {
 				directive = j
 			}
 		}
-		if directive >= 0 && msgs[directive].Get("output_config.effort").String() != cfg.Baseline {
+		if directive >= 0 && msgs[directive].Get("output_config.effort").String() != c.Baseline {
 			continue
 		}
-		effort := decide(model, text, assistantTail(last, 600), i > finalAssistant)
-		if effort == "" {
+		effort := decide(c, s, model, text, assistantTail(last, 600), history, i > finalAssistant)
+		if c.Shadow || effort == "" {
 			continue
 		}
 		at := i
 		if directive >= 0 {
-			if effort == cfg.Baseline {
+			if effort == c.Baseline {
 				continue
 			}
 			at = directive + 1 // after Claude Code's own value, so ours applies
@@ -271,12 +360,11 @@ func route(model string, body []byte) []byte {
 // translator drops Claude Code's per-turn directive, so the only user override
 // visible here is a non-baseline top-level effort (/effort), which wins.
 func routeCodex(model string, body []byte) []byte {
-	mu.Lock()
-	defer mu.Unlock()
-	if !routed(model) {
+	c, s := snapshot()
+	if s == nil || !routed(c, model) || !gjson.ValidBytes(body) {
 		return body
 	}
-	if e := gjson.GetBytes(body, "reasoning.effort"); e.Exists() && e.String() != cfg.Baseline {
+	if e := gjson.GetBytes(body, "reasoning.effort"); e.Exists() && e.String() != c.Baseline {
 		return body
 	}
 	items := gjson.GetBytes(body, "input").Array()
@@ -287,14 +375,20 @@ func routeCodex(model string, body []byte) []byte {
 		}
 	}
 	out := make([]string, 0, len(items)*2)
+	history := ""
 	var last gjson.Result // latest assistant message so far
 	for i, it := range items {
 		if it.Get("role").String() == "assistant" {
 			last = it
 		}
 		// The API rejects adjacent updates, and normalize may see its own output.
-		if text, ok := userText(it); ok && (i == 0 || items[i-1].Get("type").String() != "configuration_update") {
-			if effort := decide(model, text, assistantTail(last, 600), i > finalAssistant); effort != "" {
+		if text, ok := userText(it); ok {
+			history = historyKey(history, text)
+			if i > 0 && items[i-1].Get("type").String() == "configuration_update" {
+				out = append(out, it.Raw)
+				continue
+			}
+			if effort := decide(c, s, model, text, assistantTail(last, 600), history, i > finalAssistant); effort != "" && !c.Shadow {
 				// Every decided turn carries its own item: the latest one wins, so a
 				// medium turn after an xhigh one must say so.
 				out = append(out, fmt.Sprintf(`{"type":"configuration_update","reasoning":{"effort":%q}}`, effort))
@@ -315,25 +409,75 @@ func routeCodex(model string, body []byte) []byte {
 // decide returns the turn's effort, or "" when there is none to inject. Only the
 // first request of a turn (no reply yet) may classify: deciding later would edit
 // history the model has already answered from.
-func decide(model, text, prev string, mayClassify bool) string {
-	k := key(text)
-	effort, known := decisions[k]
-	if !known && mayClassify {
-		start := time.Now()
-		var err error
-		effort, err = classify(prev, head(text, 1200))
-		l := logLine{Key: k, Effort: effort, At: start.Format(time.RFC3339), Model: model,
-			Ms: time.Since(start).Milliseconds(), Preview: head(text, 80)}
-		if err != nil {
-			l.Effort, l.Err = noDecision, err.Error()
-		}
-		record(l)
-		effort = l.Effort
+func decide(c config, s *routerState, model, text, prev string, history string, mayClassify bool) string {
+	// Full digest, with model and previous context; separate shadow namespace so
+	// switching to active cannot insert past shadow decisions into an existing history.
+	material, _ := json.Marshal(struct {
+		Version, Model, Previous string
+		History                  string
+	}{"v2", model, prev, history})
+	k := key(string(material))
+	cacheKey := k
+	if c.Shadow {
+		cacheKey = "shadow:" + k
 	}
-	if effort == noDecision {
+	s.mu.Lock()
+	if wait := s.pending[cacheKey]; wait != nil {
+		s.mu.Unlock()
+		<-wait
+		s.mu.Lock()
+	}
+	if effort, known := s.decisions[cacheKey]; known {
+		s.mu.Unlock()
+		if effort == noDecision {
+			return ""
+		}
+		return effort
+	}
+	if s.warned {
+		s.mu.Unlock()
+		return "" // Preserve known history, but stop new decisions after a state error.
+	}
+	if !mayClassify {
+		// Remember pre-router and shadow histories as never-inject, including restarts.
+		s.record(c, logLine{Key: k, Effort: noDecision, Shadow: c.Shadow}, cacheKey)
+		s.mu.Unlock()
 		return ""
 	}
-	return effort
+	done := make(chan struct{})
+	s.pending[cacheKey] = done
+	s.mu.Unlock()
+	start := time.Now()
+	effort, err := safeClassify(c, prev, head(text, 1200), k)
+	l := logLine{Key: k, Effort: effort, At: start.UTC().Format(time.RFC3339), Model: modelPrefix(c, model), Ms: time.Since(start).Milliseconds(), Shadow: c.Shadow}
+	if err != nil {
+		l.Effort, l.Err = noDecision, err.Error()
+	}
+	s.mu.Lock()
+	s.record(c, l, cacheKey)
+	result := s.decisions[cacheKey]
+	delete(s.pending, cacheKey)
+	close(done)
+	s.mu.Unlock()
+	if result == noDecision {
+		return ""
+	}
+	return result
+}
+
+func safeClassify(c config, previous, message, turnID string) (effort string, err error) {
+	defer func() {
+		if recover() != nil {
+			effort, err = "", errors.New("classifier_panic")
+		}
+	}()
+	select {
+	case classifierSlots <- struct{}{}:
+		defer func() { <-classifierSlots }()
+	default:
+		return "", errors.New("classifier_busy")
+	}
+	return classify(c, previous, message, turnID)
 }
 
 var efforts = map[string]string{
@@ -343,35 +487,44 @@ var efforts = map[string]string{
 	"xhigh":  "Hard: open-ended architecture, subtle debugging, research, or a long autonomous build.",
 }
 
-func classify(previous, message string) (string, error) {
+func classify(c config, previous, message, turnID string) (string, error) {
 	reqBody, _ := json.Marshal(map[string]any{
-		"model": cfg.Model,
-		"state": map[string]string{"assistant_previous_reply_tail": previous, "user_message": message},
+		"model": c.Model,
+		"state": map[string]any{"assistant_previous_reply_tail": previous, "user_message": message, "turn_id": turnID, "router_shadow": c.Shadow},
 		"questions": map[string]any{"effort": map[string]any{
 			"type":         "choice",
 			"instructions": "How much reasoning effort should a coding agent spend on this user message, given the assistant's previous reply?",
 			"criteria":     efforts,
 		}},
 	})
-	req, err := http.NewRequest(http.MethodPost, cfg.URL, bytes.NewReader(reqBody))
+	req, err := http.NewRequest(http.MethodPost, c.URL, bytes.NewReader(reqBody))
 	if err != nil {
-		return "", err
+		return "", errors.New("classifier_request")
 	}
 	req.Header.Set("Content-Type", "application/json")
-	if cfg.APIKey != "" {
-		req.Header.Set("Authorization", "Bearer "+cfg.APIKey)
+	if c.APIKey != "" {
+		req.Header.Set("Authorization", "Bearer "+c.APIKey)
 	}
-	resp, err := (&http.Client{Timeout: time.Duration(cfg.TimeoutMS) * time.Millisecond}).Do(req)
+	resp, err := (&http.Client{Timeout: time.Duration(c.TimeoutMS) * time.Millisecond, Transport: classifierTransport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}).Do(req)
 	if err != nil {
-		return "", err
+		if errors.Is(err, context.DeadlineExceeded) {
+			return "", errors.New("classifier_timeout")
+		}
+		return "", errors.New("classifier_transport")
 	}
 	defer resp.Body.Close()
-	data, err := io.ReadAll(resp.Body)
+	data, err := io.ReadAll(io.LimitReader(resp.Body, 16*1024+1))
 	if err != nil {
-		return "", err
+		return "", errors.New("classifier_read")
+	}
+	if len(data) > 16*1024 {
+		return "", errors.New("classifier_oversize")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("jev %d: %s", resp.StatusCode, head(string(data), 200))
+		return "", fmt.Errorf("classifier_http_%d", resp.StatusCode)
+	}
+	if !gjson.ValidBytes(data) {
+		return "", errors.New("classifier_json")
 	}
 	// Laya/Jev return {answers}, SemIf wraps it as {code,data:{answers}}.
 	choice := gjson.GetBytes(data, "answers.effort.choice")
@@ -379,7 +532,10 @@ func classify(previous, message string) (string, error) {
 		choice = gjson.GetBytes(data, "data.answers.effort.choice")
 	}
 	if _, ok := efforts[choice.String()]; !ok {
-		return "", fmt.Errorf("jev: unexpected answer %s", head(string(data), 200))
+		return "", errors.New("classifier_answer")
 	}
 	return choice.String(), nil
 }
+
+// A classifier request never consults HTTP_PROXY/HTTPS_PROXY. Redirects are rejected.
+var classifierTransport = func() *http.Transport { t := http.DefaultTransport.(*http.Transport).Clone(); t.Proxy = nil; return t }()

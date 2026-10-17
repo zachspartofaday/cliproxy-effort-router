@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/pluginabi"
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/pluginapi"
+	"github.com/router-for-me/CLIProxyAPI/v8/sdk/pluginabi"
+	"github.com/router-for-me/CLIProxyAPI/v8/sdk/pluginapi"
 	"github.com/tidwall/gjson"
 )
 
@@ -39,7 +39,9 @@ func jev(t *testing.T, choice map[string]string, extraConfig string) *int {
 		json.NewEncoder(w).Encode(ans)
 	}))
 	t.Cleanup(srv.Close)
-	configure([]byte("jev-url: " + srv.URL + "\nstate-file: " + filepath.Join(t.TempDir(), "s.jsonl") + "\n" + extraConfig))
+	if err := configure([]byte("jev-url: " + srv.URL + "\nstate-file: " + filepath.Join(t.TempDir(), "s.jsonl") + "\n" + extraConfig)); err != nil {
+		t.Fatal(err)
+	}
 	return calls
 }
 
@@ -72,7 +74,7 @@ func TestRouteKeepsDecisionsStableAcrossRequests(t *testing.T) {
 	}
 
 	// Restart: decisions come back from the state file.
-	loadDecisions(cfg.StateFile)
+	state.load(cfg.StateFile)
 	if string(route("claude-fable-5-1", []byte(loop))) != string(out2) || *calls != 1 {
 		t.Fatal("decision not restored from state file")
 	}
@@ -80,11 +82,11 @@ func TestRouteKeepsDecisionsStableAcrossRequests(t *testing.T) {
 
 func TestRecordSurvivesTornLastLine(t *testing.T) {
 	jev(t, nil, "")
-	os.WriteFile(cfg.StateFile, []byte(`{"key":"a","effort":"high"}`+"\n"+`{"key":"b","eff`), 0o600)
-	record(logLine{Key: "c", Effort: "low"})
-	loadDecisions(cfg.StateFile)
-	if decisions["a"] != "high" || decisions["c"] != "low" {
-		t.Fatalf("records around a torn line must load: %v", decisions)
+	os.WriteFile(cfg.StateFile, []byte(`{"key":"`+key("a")+`","effort":"high"}`+"\n"+`{"key":"b","eff`), 0o600)
+	state.record(cfg, logLine{Key: key("c"), Effort: "low"}, key("c"))
+	state.load(cfg.StateFile)
+	if state.decisions[key("a")] != "high" || state.decisions[key("c")] != "low" {
+		t.Fatalf("records around a torn line must load: %v", state.decisions)
 	}
 }
 
@@ -172,8 +174,8 @@ func TestRouteCodexUsesConfigurationUpdates(t *testing.T) {
 	}
 }
 
-func TestNormalizeRoutesCodexOnlyForClaudeClients(t *testing.T) {
-	jev(t, map[string]string{"hi": "high"}, "")
+func TestNormalizeRoutesNativeAndClaudeClients(t *testing.T) {
+	jev(t, map[string]string{"hi": "high"}, "codex-baseline-effort: medium")
 	body := `{"reasoning":{"effort":"medium"},"input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"hi"}]}]}`
 	normalize := func(from string) string {
 		in, _ := json.Marshal(pluginapi.RequestTransformRequest{FromFormat: from, ToFormat: "codex", Model: "gpt-6-sol", Body: []byte(body)})
@@ -182,8 +184,8 @@ func TestNormalizeRoutesCodexOnlyForClaudeClients(t *testing.T) {
 		json.Unmarshal([]byte(gjson.GetBytes(raw, "result").Raw), &res)
 		return string(res.Body)
 	}
-	if normalize("openai-response") != body {
-		t.Fatal("native Responses clients (Codex CLI) must stay untouched")
+	if normalize("openai-response") == body {
+		t.Fatal("native Responses sampling must be routed")
 	}
 	if normalize("claude") == body {
 		t.Fatal("Claude Code traffic must be routed")
