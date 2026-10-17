@@ -49,6 +49,7 @@ type registration struct {
 	Metadata      pluginapi.Metadata `json:"metadata"`
 	Capabilities  struct {
 		RequestNormalizer bool `json:"request_normalizer"`
+		ManagementAPI     bool `json:"management_api"`
 	} `json:"capabilities"`
 }
 
@@ -142,6 +143,7 @@ func handleMethod(method string, request []byte) ([]byte, error) {
 			},
 		}}
 		reg.Capabilities.RequestNormalizer = true
+		reg.Capabilities.ManagementAPI = true
 		return okEnvelope(reg)
 	case pluginabi.MethodRequestNormalize:
 		var req pluginapi.RequestTransformRequest
@@ -163,6 +165,14 @@ func handleMethod(method string, request []byte) ([]byte, error) {
 		}
 		recordProof(req, body)
 		return okEnvelope(pluginapi.PayloadResponse{Body: body})
+	case pluginabi.MethodManagementRegister:
+		return okEnvelope(managementRegistration())
+	case pluginabi.MethodManagementHandle:
+		var req pluginapi.ManagementRequest
+		if err := json.Unmarshal(request, &req); err != nil {
+			return nil, fmt.Errorf("invalid management request")
+		}
+		return okEnvelope(handleManagement(req))
 	case pluginabi.MethodPluginQuiesce, pluginabi.MethodPluginShutdown:
 		return okEnvelope(struct{}{})
 	default:
