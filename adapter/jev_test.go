@@ -170,10 +170,13 @@ func TestJevResponseBoundsAndValidation(t *testing.T) {
 		}
 		upstream.Close()
 	}
-	for _, endpoint := range []string{"http://opencode.ai/zen/v1/systemone", "https://example.com/v1/systemone", "https://opencode.ai/zen/v1/systemone?key=fake", "http://127.0.0.1/other"} {
+	for _, endpoint := range []string{"http://opencode.ai/inference/systemone/v1/systemone", "https://opencode.ai/zen/v1/systemone", "https://example.com/v1/systemone", "https://opencode.ai/inference/systemone/v1/systemone?key=fake", "http://127.0.0.1/other"} {
 		if _, err := newJevServer(endpoint, "jev-1.13-free", "fake", time.Second, nil); err == nil {
 			t.Fatalf("unsafe endpoint %s", endpoint)
 		}
+	}
+	if _, err := newJevServer(zenEndpoint, "jev-1.13-free", "fake", time.Second, nil); err != nil || zenEndpoint != "https://opencode.ai/inference/systemone/v1/systemone" {
+		t.Fatal("pinned Zen endpoint rejected or changed")
 	}
 }
 func TestComparisonTimeoutKeepsJevDecision(t *testing.T) {
