@@ -14,7 +14,8 @@ import (
 	"time"
 )
 
-const zenEndpoint = "https://opencode.ai/zen/v1/systemone"
+// Zen moved Jev to /inference; the legacy /zen path throttles jev-1.13-free (HTTP 429, 2026-10-17).
+const zenEndpoint = "https://opencode.ai/inference/systemone/v1/systemone"
 const effortInstructions = "How much reasoning effort should a coding agent spend on this user message, given the assistant's previous reply?"
 
 func effortCriteria() map[string]string {

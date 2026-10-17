@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/binary"
 	"flag"
 	"fmt"
 	"io"
@@ -93,13 +94,13 @@ func main() {
 }
 
 func readCredential(path string) (string, error) {
-	f, err := os.Open(path)
+	f, err := os.OpenFile(path, os.O_RDONLY|syscall.O_NOFOLLOW, 0)
 	if err != nil {
 		return "", fmt.Errorf("credential unavailable")
 	}
 	defer f.Close()
 	info, err := f.Stat()
-	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm()&0o077 != 0 {
+	if err != nil || !info.Mode().IsRegular() || !privateCredential(f, path, info) {
 		return "", fmt.Errorf("unsafe credential")
 	}
 	b, err := io.ReadAll(io.LimitReader(f, 4097))
@@ -111,4 +112,73 @@ func readCredential(path string) (string, error) {
 		return "", fmt.Errorf("invalid credential")
 	}
 	return key, nil
+}
+
+// privateCredential accepts files owned by root or this process that are
+// owner-only. For a non-root User=, systemd's LoadCredential copy is root-owned
+// 0400 plus a read ACL for the service user, whose mask then shows as group
+// read (0440, group::---). So the group read bit alone is also accepted for a
+// file directly inside $CREDENTIALS_DIRECTORY whose ACL grants nothing beyond
+// the owner and this process's user.
+func privateCredential(f *os.File, path string, info os.FileInfo) bool {
+	st, ok := info.Sys().(*syscall.Stat_t)
+	if !ok || (st.Uid != 0 && int(st.Uid) != os.Geteuid()) {
+		return false
+	}
+	perm := info.Mode().Perm()
+	if perm&0o077 == 0 {
+		return true
+	}
+	dir := os.Getenv("CREDENTIALS_DIRECTORY")
+	if dir == "" || perm&0o077 != 0o040 || filepath.Dir(filepath.Clean(path)) != filepath.Clean(dir) {
+		return false
+	}
+	acl, ok := accessACL(f)
+	return ok && aclGrantsOnly(acl, os.Geteuid())
+}
+
+// POSIX ACL entry tags, in the order Linux requires them.
+const (
+	aclUserObj  = 0x01
+	aclUser     = 0x02
+	aclGroupObj = 0x04
+	aclGroup    = 0x08
+	aclMask     = 0x10
+	aclOther    = 0x20
+)
+
+// aclGrantsOnly reports whether a well-formed Linux system.posix_acl_access
+// value (version 2; one owner, owning-group, mask and other entry; sorted by
+// tag then id; rwx bits only) gives access to nobody but the file owner and
+// uid: a named entry for uid alone, no named group, and empty owning-group and
+// other entries.
+func aclGrantsOnly(acl []byte, uid int) bool {
+	if len(acl) < 4 || (len(acl)-4)%8 != 0 || binary.LittleEndian.Uint32(acl) != 2 {
+		return false
+	}
+	count := map[uint16]int{}
+	var lastTag uint16
+	var lastID uint32
+	for i, e := 0, acl[4:]; len(e) > 0; i, e = i+1, e[8:] {
+		tag, perm, id := binary.LittleEndian.Uint16(e), binary.LittleEndian.Uint16(e[2:]), binary.LittleEndian.Uint32(e[4:])
+		if perm&^7 != 0 || i > 0 && (tag < lastTag || tag == lastTag && (tag != aclUser || id <= lastID)) {
+			return false
+		}
+		lastTag, lastID = tag, id
+		count[tag]++
+		switch tag {
+		case aclUserObj, aclMask:
+		case aclUser:
+			if int(id) != uid {
+				return false
+			}
+		case aclGroupObj, aclOther:
+			if perm != 0 {
+				return false
+			}
+		default: // named group or unknown tag
+			return false
+		}
+	}
+	return count[aclUserObj] == 1 && count[aclUser] == 1 && count[aclGroupObj] == 1 && count[aclMask] == 1 && count[aclOther] == 1
 }

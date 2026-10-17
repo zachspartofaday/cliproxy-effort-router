@@ -38,6 +38,7 @@ import (
 )
 
 type config struct {
+	Provider      string   `yaml:"jev-provider"` // custom (jev-url), typesafe or opencode
 	URL           string   `yaml:"jev-url"`
 	Model         string   `yaml:"jev-model"`
 	APIKey        string   `yaml:"jev-api-key"`
@@ -48,6 +49,12 @@ type config struct {
 	CodexBaseline string   `yaml:"codex-baseline-effort"` // fixed native Codex request baseline
 	ProofFile     string   `yaml:"proof-file"`            // opt-in redacted normalizer evidence; empty by default
 	Baseline      string   `yaml:"baseline-effort"`       // client default; any other per-turn value is a manual /effort and wins
+}
+
+// Vendor endpoints selectable by jev-provider; tests point them at local servers.
+var providerURLs = map[string]string{
+	"typesafe": "https://api.typesafe.ai/v1/systemone",
+	"opencode": "https://opencode.ai/inference/systemone/v1/systemone",
 }
 
 const noDecision = "-" // classifier failed or turn predates the router: never inject
@@ -76,8 +83,28 @@ func configure(raw []byte) error {
 		StateFile: filepath.Join(home, ".cli-proxy-api", "effort-router.jsonl"), Baseline: "medium",
 		CodexBaseline: "high",
 	}
-	if err := yaml.Unmarshal(raw, &c); err != nil {
+	var explicit struct {
+		URL *string `yaml:"jev-url"`
+	}
+	if yaml.Unmarshal(raw, &c) != nil || yaml.Unmarshal(raw, &explicit) != nil {
 		return errors.New("invalid plugin configuration")
+	}
+	switch c.Provider {
+	case "", "custom":
+		c.Provider = "custom"
+	case "typesafe", "opencode":
+		if explicit.URL != nil && *explicit.URL != "" && *explicit.URL != providerURLs[c.Provider] {
+			return errors.New("jev-url is only for jev-provider custom")
+		}
+		if c.APIKey == "" {
+			return errors.New("jev-provider " + c.Provider + " needs jev-api-key")
+		}
+		c.URL = providerURLs[c.Provider]
+		if c.Provider == "opencode" && c.Model == "jev-latest" {
+			c.Model = "jev-1.13" // Zen lists versioned Jev models only
+		}
+	default:
+		return errors.New("invalid jev-provider")
 	}
 	u, err := url.Parse(c.URL)
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
@@ -488,9 +515,14 @@ var efforts = map[string]string{
 }
 
 func classify(c config, previous, message, turnID string) (string, error) {
+	state := map[string]any{"assistant_previous_reply_tail": previous, "user_message": message}
+	if c.Provider == "custom" {
+		// Local metadata for a loopback adapter; vendor endpoints never see it.
+		state["turn_id"], state["router_shadow"] = turnID, c.Shadow
+	}
 	reqBody, _ := json.Marshal(map[string]any{
 		"model": c.Model,
-		"state": map[string]any{"assistant_previous_reply_tail": previous, "user_message": message, "turn_id": turnID, "router_shadow": c.Shadow},
+		"state": state,
 		"questions": map[string]any{"effort": map[string]any{
 			"type":         "choice",
 			"instructions": "How much reasoning effort should a coding agent spend on this user message, given the assistant's previous reply?",
